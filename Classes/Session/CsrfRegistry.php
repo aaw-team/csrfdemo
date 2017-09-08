@@ -16,6 +16,7 @@ namespace AawTeam\CsrfDemo\Session;
  * The TYPO3 project - inspiring people to share!
  */
 
+use ParagonIE\ConstantTime\Binary;
 use ParagonIE\ConstantTime\Encoding;
 use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
@@ -140,7 +141,15 @@ final class CsrfRegistry
      */
     private function storeSessionData(array $sessionData)
     {
-        $this->userAuthentication->setAndSaveSessionData(self::SESSION_IDENTIFIER, \json_encode($sessionData));
+        if (empty($sessionData)) {
+            $sessionDataString = '';
+        } else {
+            // Authenticate session data with a hmac
+            $sessionDataString = \json_encode($sessionData);
+            $hmac = \hash_hmac('sha256', $sessionDataString, $this->getTypo3EncryptionKey());
+            $sessionDataString .= $hmac;
+        }
+        $this->userAuthentication->setAndSaveSessionData(self::SESSION_IDENTIFIER, $sessionDataString);
     }
 
     /**
@@ -148,9 +157,15 @@ final class CsrfRegistry
      */
     private function getSessionData() : array
     {
-        $sessionData = $this->userAuthentication->getSessionData(self::SESSION_IDENTIFIER);
-        if (is_string($sessionData) && !empty($sessionData)) {
-            $sessionData = \json_decode($sessionData, true);
+        $sessionData = null;
+        $sessionDataString = $this->userAuthentication->getSessionData(self::SESSION_IDENTIFIER);
+        if (is_string($sessionDataString) && Binary::safeStrlen($sessionDataString) > 64) {
+            // Check the hmac of the session data
+            $hmac = Binary::safeSubstr($sessionDataString, -64);
+            $sessionDataString = Binary::safeSubstr($sessionDataString, 0, -64);
+            if (\hash_equals(\hash_hmac('sha256', $sessionDataString, $this->getTypo3EncryptionKey()), $hmac)) {
+                $sessionData = \json_decode($sessionDataString, true);
+            }
         }
         if (!is_array($sessionData)) {
             $sessionData = [];
@@ -170,4 +185,18 @@ final class CsrfRegistry
                && $token['crdate'] >= ($GLOBALS['EXEC_TIME'] - self::TOKEN_LIFETIME);
     }
 
+    /**
+     * @throws \RuntimeException
+     * @return string
+     */
+    private function getTypo3EncryptionKey() : string
+    {
+        $encryptionKey = $GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey'];
+        // Check encryption key: if it was generated automatically, it
+        // should be 96 chars long. We do not accept shorter strings.
+        if (!is_string($encryptionKey) || Binary::safeStrlen($encryptionKey) < 96) {
+            throw new \RuntimeException('Invalid TYPO3 encryptionKey: set a new one in the Install Tool');
+        }
+        return $encryptionKey;
+    }
 }
