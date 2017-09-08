@@ -1,0 +1,10 @@
+{
+    "config" : {
+        "optimize-autoloader": true,
+        "classmap-authoritative": true,
+        "prepend-autoloader": false
+    },
+    "require": {
+        "paragonie/constant_time_encoding": "^1|^2"
+    }
+}

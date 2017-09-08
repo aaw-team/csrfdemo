@@ -1,0 +1,21 @@
+{
+    "name": "aaw-team/csrfdemo",
+    "type": "typo3-cms-extension",
+    "description": "Experimental demo for CSRF usage in TYPO3 extensions",
+    "homepage": "",
+    "version": "0.1.0-dev",
+    "require": {
+        "php": "^7.0 || ^7.1",
+        "typo3/cms-core": "^8.7",
+        "paragonie/constant_time_encoding": "^1|^2"
+    },
+    "replace": {
+        "csrfdemo": "self.version",
+        "typo3-ter/csrfdemo": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "AawTeam\\Csrfdemo\\": "Classes/"
+        }
+    }
+}
