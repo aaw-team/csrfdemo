@@ -7,7 +7,7 @@ It is used to describe:
 - the concept of CSRF attack prevention and token generation/verification
 - a possible integration in extbase action controllers
 
-## Securirty
+## Security
 
 This code has not been audited by third party. It has been written for demonstration purposes only, but with
 "best effort" for real-world applications.
