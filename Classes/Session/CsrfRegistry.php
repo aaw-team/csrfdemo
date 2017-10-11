@@ -26,9 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 
 /**
- *
- * @author chrigu
- *
+ * CsrfRegistry
  */
 final class CsrfRegistry
 {

@@ -22,7 +22,7 @@ use AawTeam\CsrfDemo\ViewHelpers\Form\CsrfTokenViewHelper;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- *
+ * AbstractController
  */
 abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
 {
@@ -57,9 +57,6 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
             // Check only 'web' requests
             if ($this->request instanceof \TYPO3\CMS\Extbase\Mvc\Web\Request) {
                 // Check for the @csrfvalidation annotation of the actionMethod
-                // Possible specifications:
-                // @csrfvalidation                                             Validate every time the actionMethod is called
-                // @csrfvalidation ifArgumentsPassed(argument1 [, argument2])  Validate only if one of the arguments is passed in request
                 $methodTagsValues = $this->reflectionService->getMethodTagsValues(get_class($this), $this->actionMethodName);
                 if (array_key_exists('csrfvalidation', $methodTagsValues)) {
                     $specification = $methodTagsValues['csrfvalidation'];

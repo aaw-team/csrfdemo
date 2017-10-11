@@ -22,9 +22,7 @@ use AawTeam\CsrfDemo\Session\CsrfRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- *
- * @author chrigu
- *
+ * CsrfTokenViewHelper
  */
 class CsrfTokenViewHelper extends \TYPO3\CMS\Fluid\ViewHelpers\Form\AbstractFormFieldViewHelper
 {
