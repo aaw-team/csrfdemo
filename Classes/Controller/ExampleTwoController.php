@@ -59,7 +59,8 @@ class ExampleTwoController extends AbstractController
     {
         if (!$frontendUser) {
             // Display the form
+        } else {
+            // At this point we can be sure that the request is legitimate
         }
-        // At this point we can be sure that the request is legitimate
     }
 }
