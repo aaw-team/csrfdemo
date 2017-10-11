@@ -37,6 +37,8 @@ final class CsrfRegistry
     const MAX_TOKENS_IN_SESSION = 25;
     const HMAC_ALGO = 'sha256';
     const HMAC_LENGTH = 64;
+    const TOKEN_BYTES = 32;
+    const TOKEN_IDENTIFIER_BYTES = 16;
 
     /**
      * @var AbstractUserAuthentication
@@ -71,9 +73,9 @@ final class CsrfRegistry
      */
     public function generateTokenAndIdentifier() : array
     {
-        $identifier = Encoding::hexEncode(GeneralUtility::makeInstance(Random::class)->generateRandomBytes(16));
+        $identifier = Encoding::hexEncode(GeneralUtility::makeInstance(Random::class)->generateRandomBytes(self::TOKEN_IDENTIFIER_BYTES));
         $token = [
-            'token' => Encoding::hexEncode(GeneralUtility::makeInstance(Random::class)->generateRandomBytes(32)),
+            'token' => Encoding::hexEncode(GeneralUtility::makeInstance(Random::class)->generateRandomBytes(self::TOKEN_BYTES)),
             'crdate' => (int) $GLOBALS['EXEC_TIME'],
         ];
         $this->storeToken($identifier, $token);
@@ -185,6 +187,7 @@ final class CsrfRegistry
         return is_array($token)
                && array_key_exists('crdate', $token) && is_int($token['crdate'])
                && array_key_exists('token', $token) && is_string($token['token'])
+               && Binary::safeStrlen($token['token']) == (self::TOKEN_BYTES * 2)
                && $token['crdate'] >= ($GLOBALS['EXEC_TIME'] - self::TOKEN_LIFETIME);
     }
 
