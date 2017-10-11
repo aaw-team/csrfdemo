@@ -34,6 +34,8 @@ final class CsrfRegistry
     const SESSION_IDENTIFIER = 'csrfdemo';
     const TOKEN_LIFETIME = 1800;
     const MAX_TOKENS_IN_SESSION = 25;
+    const HMAC_ALGO = 'sha256';
+    const HMAC_LENGTH = 64;
 
     /**
      * @var AbstractUserAuthentication
@@ -146,8 +148,7 @@ final class CsrfRegistry
         } else {
             // Authenticate session data with a hmac
             $sessionDataString = \json_encode($sessionData);
-            $hmac = \hash_hmac('sha256', $sessionDataString, $this->getTypo3EncryptionKey());
-            $sessionDataString .= $hmac;
+            $sessionDataString = $this->appendHMAC($sessionDataString);
         }
         $this->userAuthentication->setAndSaveSessionData(self::SESSION_IDENTIFIER, $sessionDataString);
     }
@@ -159,12 +160,13 @@ final class CsrfRegistry
     {
         $sessionData = null;
         $sessionDataString = $this->userAuthentication->getSessionData(self::SESSION_IDENTIFIER);
-        if (is_string($sessionDataString) && Binary::safeStrlen($sessionDataString) > 64) {
-            // Check the hmac of the session data
-            $hmac = Binary::safeSubstr($sessionDataString, -64);
-            $sessionDataString = Binary::safeSubstr($sessionDataString, 0, -64);
-            if (\hash_equals(\hash_hmac('sha256', $sessionDataString, $this->getTypo3EncryptionKey()), $hmac)) {
+        if (is_string($sessionDataString)) {
+            try {
+                $sessionDataString = $this->verifyAndStripHMAC($sessionDataString);
                 $sessionData = \json_decode($sessionDataString, true);
+            } catch (InvalidHmacException $e) {
+                $this->clearAll();
+                $sessionData = [];
             }
         }
         if (!is_array($sessionData)) {
@@ -183,6 +185,41 @@ final class CsrfRegistry
                && array_key_exists('crdate', $token) && is_int($token['crdate'])
                && array_key_exists('token', $token) && is_string($token['token'])
                && $token['crdate'] >= ($GLOBALS['EXEC_TIME'] - self::TOKEN_LIFETIME);
+    }
+
+    /**
+     * @param string $string
+     * @return string
+     */
+    private function appendHMAC(string $string) : string
+    {
+        return $string . $this->createHMAC($string);
+    }
+
+    /**
+     * @param string $string
+     * @throws InvalidHmacException
+     * @return string
+     */
+    private function verifyAndStripHMAC(string $string) : string
+    {
+        if (Binary::safeStrlen($string) > self::HMAC_LENGTH) {
+            $hmac = Binary::safeSubstr($string, (self::HMAC_LENGTH * -1));
+            $plainString = Binary::safeSubstr($string, 0, (self::HMAC_LENGTH * -1));
+            if (\hash_equals($this->createHMAC($plainString), $hmac)) {
+                return $plainString;
+            }
+        }
+        throw new InvalidHmacException();
+    }
+
+    /**
+     * @param string $string
+     * @return string
+     */
+    private function createHMAC(string $string) : string
+    {
+        return \hash_hmac(self::HMAC_ALGO, $string, $this->getTypo3EncryptionKey());
     }
 
     /**
