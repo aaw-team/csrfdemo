@@ -31,7 +31,7 @@ use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
  */
 final class CsrfRegistry
 {
-    const SESSION_IDENTIFIER = '__MCI_CSRF__';
+    const SESSION_IDENTIFIER = 'csrfdemo';
     const TOKEN_LIFETIME = 1800;
     const MAX_TOKENS_IN_SESSION = 25;
 
